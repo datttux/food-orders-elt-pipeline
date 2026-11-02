@@ -1,0 +1,52 @@
+================================================================================
+                    FOOD ORDERS ELT PIPELINE VALIDATION REPORT
+================================================================================
+Pipeline Execution Status : PASSED
+Total Batches Processed   : 11
+Total Records Extracted   : 1010
+Total Raw Records Stored  : 1010
+Total Valid Transformed   : 1000
+Total Rejected Records    : 10
+Total Analytics Stored    : 1000
+--------------------------------------------------------------------------------
+1. DATA INTEGRITY & UNIQUENESS CHECKS:
+   - Primary Identifier (order_id) Uniqueness : PASSED (0 duplicate order_ids retained)
+   - Cross-Batch Deduplication Check          : PASSED
+   - Chronological Sequence (Delivery >= Order): PASSED (0 negative delivery times)
+
+2. DATA TYPES & DERIVED COLUMNS:
+   - order_date_and_time   : DATETIME (Verified)
+   - delivery_date_and_time: DATETIME (Verified)
+   - delivery_time_minutes : FLOAT (Verified: Range 30.0m to 119.0m)
+   - order_date            : DATE (YYYY-MM-DD)
+   - order_hour            : INTEGER (0 - 23)
+   - platform_net_revenue  : FLOAT (Strict 4-component formula verified)
+
+3. REJECTED RECORDS AUDIT:
+   - Total Records Rejected: 10
+   - Breakdown of Rejections:
+     * Duplicate Order ID: 831: 1 records
+     * Duplicate Order ID: 571: 1 records
+     * Duplicate Order ID: 419: 1 records
+     * Duplicate Order ID: 122: 1 records
+     * Duplicate Order ID: 156: 1 records
+     * Duplicate Order ID: 208: 1 records
+     * Duplicate Order ID: 580: 1 records
+     * Duplicate Order ID: 497: 1 records
+     * Duplicate Order ID: 197: 1 records
+     * Duplicate Order ID: 133: 1 records
+   - Detailed rejected records saved to: /Users/dattathreyachari/Desktop/food/rejected_records.csv
+
+4. MISSING VALUES INTENTIONALLY RETAINED IN CLEANED DATASET:
+  - order_value: 40 missing
+  - delivery_fee: 50 missing
+  - commission_fee: 40 missing
+  - payment_processing_fee: 50 missing
+  - refunds_chargebacks: 40 missing
+  - platform_net_revenue: 172 missing
+   (Rationale: Missing order values and fees are preserved as NULL to avoid
+    distorting GMV, ticket size, or operational revenue calculations).
+
+5. VALIDATION ISSUES ENCOUNTERED:
+   None. All assertions satisfied.
+================================================================================
