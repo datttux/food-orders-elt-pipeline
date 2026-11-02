@@ -1,0 +1,91 @@
+================================================================================
+                      FOOD ORDERS ELT PIPELINE: PROJECT FLOW
+================================================================================
+
+1. VISUAL FLOWCHART (HOW DATA MOVES THROUGH THE SYSTEM)
+--------------------------------------------------------------------------------
+
+   [food_orders.csv] (Raw CSV file with 1,010 rows)
+           │
+           │ 1. Read 100 rows at a time
+           ▼
+     [extract.py]
+           │
+           │ 2. Save original data safely
+           ▼
+   ┌──────────────────────────────────────────────────────────┐
+   │ DATABASE 1: food_orders_raw_db (raw_food_orders)         │
+   │ Stores all 1,010 records exactly as received.             │
+   │ Nothing is deleted or modified here.                     │
+   └──────────────────────────────────────────────────────────┘
+           │
+           │ 3. Fetch data back in 100-row chunks
+           ▼
+    [retrieve_raw.py]
+           │
+           │ 4. Clean and enrich data
+           ▼
+     [transform.py]
+           │
+           ├──► DUPLICATES CAUGHT: 10 duplicate orders quarantined
+           │    and saved into -> [rejected_records.csv]
+           │
+           ├──► MISSING VALUES FIXED:
+           │    • Missing Payment Method -> labeled "Unknown"
+           │    • Missing Offers -> labeled "Not Specified"
+           │    • Missing Fees/Refunds -> kept blank (never faked as zero)
+           │
+           └──► 4 NEW BUSINESS COLUMNS CREATED:
+                1. Delivery_Time_Minutes (delivery time minus order time)
+                2. Order_Date (e.g. 2024-02-01)
+                3. Order_Hour (hour of the day: 0 to 23)
+                4. Platform_Net_Revenue (Commission + Delivery Fee 
+                   minus Payment Fee minus Refunds)
+           │
+           │ 5. Verify quality rules (no negative times, no bad math)
+           ▼
+     [validate.py] ──► Writes audit results -> [validation_report.txt]
+           │
+           │ 6. Save clean records in batches
+           ▼
+   ┌──────────────────────────────────────────────────────────┐
+   │ DATABASE 2: food_orders_analytics_db (cleaned_food_orders)│
+   │ Stores exactly 1,000 clean, verified, ready-to-use rows. │
+   └──────────────────────────────────────────────────────────┘
+           │
+           │ 7. Run SQL queries for business decision-makers
+           ▼
+   [sql_analysis.py]
+           │
+           ▼
+   FINAL BUSINESS RESULTS:
+   • Total Gross Order Value : $1,013,415.00
+   • Average Order Value     : $1,055.64
+   • Most Used Payment       : Cash on Delivery (336 orders)
+   • Top Sales Channel       : Mobile App (686 orders, ~69%)
+   • Average Delivery Time   : 73.58 minutes
+   • Total Net Revenue Made  : $80,877.00
+
+
+2. WHAT DOES EACH PYTHON FILE DO? (IN SIMPLE WORDS)
+--------------------------------------------------------------------------------
+1. config.py            : Settings notebook (database password, paths, batch size).
+2. extract.py           : The Reader. Reads the CSV 100 rows at a time.
+3. load_raw.py          : The Safe. Saves raw data into MySQL without changing anything.
+4. retrieve_raw.py      : The Fetcher. Pulls batches from the raw database.
+5. transform.py         : The Cleaner & Calculator. Removes duplicates, labels 
+                          missing info, and calculates profit and delivery duration.
+6. validate.py          : The Inspector. Makes sure no mistakes or negative times exist.
+7. load_transformed.py  : The Final Storer. Puts clean data into the analytics database.
+8. elt_batch_pipeline.py: The Conductor. Runs all steps in sequence from start to finish.
+9. sql_analysis.py      : The Analyst. Runs SQL questions to give management clear answers.
+
+
+3. WHY DO WE USE TWO SEPARATE DATABASES? (ELT PRINCIPLE)
+--------------------------------------------------------------------------------
+• Database 1 (Raw)      : If business rules change in the future, your original 
+                          data is never lost or destroyed.
+• Database 2 (Analytics): Fast, clean, reliable data ready for business charts,
+                          reports, and dashboards without data bugs.
+
+================================================================================
