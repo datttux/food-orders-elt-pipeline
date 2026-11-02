@@ -7,6 +7,13 @@ Stores file paths, batch processing parameters, and database connection details.
 import os
 from pathlib import Path
 
+# Load environment variables from .env if present
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 # Base Paths
 BASE_DIR = Path(__file__).resolve().parent
 CSV_FILE_PATH = os.getenv("CSV_FILE_PATH", str(BASE_DIR / "food_orders.csv"))
